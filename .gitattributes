@@ -1,0 +1,9 @@
+# Shell scripts run on Linux VMs. A CRLF checkout makes the shebang line
+# `#!/usr/bin/env bash\r`, which fails with "bad interpreter", so pin them to
+# LF regardless of the platform git is running on.
+*.sh text eol=lf
+
+# Same reasoning for anything else consumed by a Unix toolchain.
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
