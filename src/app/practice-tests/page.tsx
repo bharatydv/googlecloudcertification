@@ -138,14 +138,21 @@ export default function PracticeTestsPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {topics.map((topic) => (
-              <Link
+              /* The card is a div, not a link. The heading's link stretches a
+                 pseudo-element over the whole card for the click target, which
+                 keeps the secondary link a sibling rather than a nested <a>. */
+              <div
                 key={topic.topic}
-                href={`/practice-tests/topics/${topic.topic}`}
-                className="group flex items-start gap-4 rounded-card border border-ink-200 bg-white p-5 transition-[box-shadow,border-color] hover:border-brand-300 hover:shadow-subtle"
+                className="group relative flex items-start gap-4 rounded-card border border-ink-200 bg-white p-5 transition-[box-shadow,border-color] hover:border-brand-300 hover:shadow-subtle"
               >
                 <div className="min-w-0 flex-1">
                   <h3 className="text-[0.9375rem] font-medium text-ink-900 group-hover:text-brand-700">
-                    {topic.label}
+                    <Link
+                      href={`/practice-tests/topics/${topic.topic}`}
+                      className="before:absolute before:inset-0 before:rounded-card"
+                    >
+                      {topic.label}
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[0.8125rem] leading-relaxed text-ink-500">
                     {topic.blurb}
@@ -160,7 +167,7 @@ export default function PracticeTestsPage() {
                 <span className="shrink-0 rounded-full bg-ink-100 px-2.5 py-1 text-[0.75rem] font-medium text-ink-600">
                   {topic.count}
                 </span>
-              </Link>
+              </div>
             ))}
           </div>
         </Container>
