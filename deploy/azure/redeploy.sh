@@ -18,6 +18,10 @@ if ! az_ account show >/dev/null 2>&1; then
   exit 1
 fi
 
+if [ -n "$SUBSCRIPTION_ID" ]; then
+  az_ account set --subscription "$SUBSCRIPTION_ID"
+fi
+
 SUBSCRIPTION="$(az_ account show --query id -o tsv | tr -d '\r')"
 if [ -z "$ACR" ]; then
   ACR="gcpprep$(echo "$SUBSCRIPTION" | tr -d '-' | cut -c1-12)"

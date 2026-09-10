@@ -9,6 +9,12 @@
 # asia-south1. Container Apps is available there.
 LOCATION="${LOCATION:-centralindia}"
 
+# Which subscription to deploy into. Leave empty to use whichever one the CLI
+# has active. Set it when the account has several — this account has two named
+# "Azure subscription 1", and the active one is not necessarily the intended
+# one, so pinning the id is the only way to be sure of what gets billed.
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-}"
+
 RESOURCE_GROUP="${RESOURCE_GROUP:-gcpprep-rg}"
 CONTAINER_ENV="${CONTAINER_ENV:-gcpprep-env}"
 APP="${APP:-gcpprep-web}"
