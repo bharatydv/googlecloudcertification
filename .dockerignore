@@ -1,0 +1,12 @@
+.git
+.github
+.next
+node_modules
+deploy
+.claude
+npm-debug.log*
+tsconfig.tsbuildinfo
+.env*.local
+README.md
+AGENTS.md
+CLAUDE.md

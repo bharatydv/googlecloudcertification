@@ -20,6 +20,46 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Deployment
+
+Deploy scripts live in `deploy/`, one folder per cloud.
+
+### Azure (Container Apps)
+
+The app needs a Node.js server — four pages read `searchParams` on the server,
+so a static export is not possible without refactoring them. Container Apps
+runs that server and scales to zero when idle, so compute costs roughly
+nothing at low traffic; the container registry is the only standing charge
+(~$5/month on the Basic SKU).
+
+```bash
+az login                          # needs a browser, so run it yourself
+bash deploy/azure/deploy.sh       # provision: RG, ACR, environment, app
+bash deploy/azure/redeploy.sh     # ship a new commit
+```
+
+`deploy.sh` is idempotent — re-running it updates rather than duplicates.
+Images are built in Azure by `az acr build`, so a local Docker daemon is not
+required. Settings (region, sizing, replica counts) are in
+`deploy/azure/config.sh` and can be overridden from the environment:
+
+```bash
+MIN_REPLICAS=1 bash deploy/azure/deploy.sh   # no cold starts, ~$10-15/month
+```
+
+Tear everything down with `az group delete -n gcpprep-rg`.
+
+### Google Cloud (Compute Engine)
+
+A single VM running the app under systemd behind nginx.
+
+```bash
+gcloud auth login
+gcloud config set project <PROJECT_ID>
+bash deploy/gcp/create-vm.sh
+bash deploy/gcp/redeploy.sh
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
@@ -28,9 +68,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
