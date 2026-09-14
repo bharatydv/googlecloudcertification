@@ -11,6 +11,16 @@ import { DISCLAIMER, site } from "@/lib/site";
 
 type Json = Record<string, unknown>;
 
+/**
+ * The generated social card, reused as the structured-data image.
+ *
+ * Google's Article rich result requires an `image`, and an article without one
+ * simply does not qualify. The `opengraph-image` route already renders a
+ * 1200x630 PNG for every page, so it is the honest answer here rather than a
+ * placeholder we would have to keep in sync.
+ */
+const OG_IMAGE = `${site.url}/opengraph-image`;
+
 export function organizationSchema(): Json {
   return {
     "@context": "https://schema.org",
@@ -80,6 +90,7 @@ export function articleSchema(input: {
     "@type": "Article",
     headline: input.title,
     description: input.description,
+    image: [OG_IMAGE],
     mainEntityOfPage: { "@type": "WebPage", "@id": `${site.url}${input.path}` },
     datePublished: input.published,
     dateModified: input.modified,
@@ -135,5 +146,41 @@ export function itemListSchema(input: {
       name: item.name,
       url: `${site.url}${item.path}`,
     })),
+  };
+}
+
+/**
+ * Practice test markup.
+ *
+ * Emitted as a `Quiz`, which schema.org defines as a LearningResource whose
+ * `hasPart` are the questions. We deliberately do *not* enumerate the
+ * questions themselves: `Question`/`acceptedAnswer` markup would publish the
+ * answer key in the page source, which both spoils the test and hands the
+ * whole bank to anyone scraping structured data. `numberOfQuestions` and the
+ * covered topics describe the resource without giving it away.
+ */
+export function quizSchema(input: {
+  name: string;
+  description: string;
+  path: string;
+  questionCount: number;
+  topics: string[];
+  educationalLevel?: string;
+}): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Quiz",
+    name: input.name,
+    description: input.description,
+    url: `${site.url}${input.path}`,
+    learningResourceType: "Practice test",
+    educationalUse: "Assessment",
+    isAccessibleForFree: true,
+    numberOfQuestions: input.questionCount,
+    about: input.topics.map((topic) => ({ "@type": "Thing", name: topic })),
+    ...(input.educationalLevel
+      ? { educationalLevel: input.educationalLevel }
+      : {}),
+    provider: { "@id": `${site.url}/#organization` },
   };
 }

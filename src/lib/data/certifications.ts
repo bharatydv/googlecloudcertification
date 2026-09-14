@@ -2502,3 +2502,9 @@ export function recommendCertifications(
 
   return ranked.slice(0, 3);
 }
+
+/**
+ * When this catalogue was last revised. Feeds `<lastmod>` for every
+ * `/certifications/*` URL — bump it when you edit the data above.
+ */
+export const CERTIFICATIONS_REVISED = "2026-09-02";

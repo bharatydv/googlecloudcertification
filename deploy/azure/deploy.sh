@@ -87,8 +87,7 @@ fi
 # Docker daemon is needed — and the build runs on a machine larger than the
 # e2-small that needed a swapfile on GCP.
 # ---------------------------------------------------------------------------
-say "Building image ${IMAGE_NAME}:${TAG} in ACR"
-az_ acr build --registry "$ACR" --image "${IMAGE_NAME}:${TAG}" --image "${IMAGE_NAME}:latest" .
+acr_build
 
 ACR_SERVER="$(az_ acr show -n "$ACR" -g "$RESOURCE_GROUP" --query loginServer -o tsv | tr -d '\r')"
 ACR_USER="$(az_ acr credential show -n "$ACR" -g "$RESOURCE_GROUP" --query username -o tsv | tr -d '\r')"
@@ -125,6 +124,8 @@ else
     --env-vars NODE_ENV=production \
     -o none
 fi
+
+apply_supabase_env
 
 FQDN="$(az_ containerapp show -n "$APP" -g "$RESOURCE_GROUP" \
   --query properties.configuration.ingress.fqdn -o tsv | tr -d '\r')"

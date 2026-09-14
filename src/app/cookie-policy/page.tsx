@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
-import { site } from "@/lib/site";
+import { LEGAL_REVISED, site } from "@/lib/site";
 import { LegalPage } from "@/components/layout/LegalPage";
 import { Callout } from "@/components/ui";
 
@@ -17,7 +17,7 @@ export default function CookiePolicyPage() {
     <LegalPage
       title="Cookie Policy"
       path="/cookie-policy"
-      updated="2026-09-01"
+      updated={LEGAL_REVISED}
       intro="This site does not use tracking cookies, advertising cookies or third-party cookies. It does use your browser's local storage to remember your study progress, which is a different thing — this page explains the distinction."
     >
       <Callout tone="success" title="No consent banner, because none is needed" className="mb-8">

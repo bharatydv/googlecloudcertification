@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { certifications, getCertification } from "@/lib/data/certifications";
+import {
+  certLevelMeta,
+  certifications,
+  getCertification,
+} from "@/lib/data/certifications";
 import {
   buildPracticeTest,
   countQuestionsForCert,
@@ -9,7 +13,7 @@ import {
   questionTopicOrder,
 } from "@/lib/data/questions";
 import { pageMetadata } from "@/lib/seo";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, quizSchema } from "@/lib/schema";
 import { Breadcrumbs, Callout, Container, Icon, JsonLd } from "@/components/ui";
 import { PracticeRunner } from "@/components/practice/PracticeRunner";
 import { RelatedContent } from "@/components/content/Related";
@@ -153,7 +157,19 @@ export default async function CertPracticePage({
         />
       </Container>
 
-      <JsonLd data={breadcrumbSchema(crumbs)} />
+      <JsonLd
+        data={[
+          breadcrumbSchema(crumbs),
+          quizSchema({
+            name: `${cert.name} Practice Test`,
+            description: `${questions.length} original ${cert.name} practice questions with a full explanation for every answer.`,
+            path: `/practice-tests/${cert.slug}`,
+            questionCount: questions.length,
+            topics: concepts,
+            educationalLevel: certLevelMeta[cert.level].label,
+          }),
+        ]}
+      />
     </>
   );
 }

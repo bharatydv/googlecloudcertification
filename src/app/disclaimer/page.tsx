@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
-import { DISCLAIMER, OFFICIAL_CERT_HOME, site } from "@/lib/site";
+import { DISCLAIMER, LEGAL_REVISED, OFFICIAL_CERT_HOME, site } from "@/lib/site";
 import { LegalPage } from "@/components/layout/LegalPage";
 import { Callout } from "@/components/ui";
 
@@ -17,7 +17,7 @@ export default function DisclaimerPage() {
     <LegalPage
       title="Disclaimer"
       path="/disclaimer"
-      updated="2026-09-01"
+      updated={LEGAL_REVISED}
       intro="This page sets out exactly what this website is, what it is not, and how you should treat the information on it."
     >
       <Callout tone="warning" title="Independent status" className="mb-8">

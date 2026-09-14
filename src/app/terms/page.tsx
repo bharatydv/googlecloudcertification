@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
-import { DISCLAIMER, site } from "@/lib/site";
+import { DISCLAIMER, LEGAL_REVISED, site } from "@/lib/site";
 import { LegalPage } from "@/components/layout/LegalPage";
 
 export const metadata: Metadata = pageMetadata({
@@ -16,7 +16,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms of Use"
       path="/terms"
-      updated="2026-09-01"
+      updated={LEGAL_REVISED}
       intro="By using this website you agree to these terms. They are written to be readable rather than exhaustive, and we have tried to keep them short."
     >
       <h2>1. About this site</h2>

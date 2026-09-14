@@ -29,13 +29,18 @@ fi
 
 TAG="$(git rev-parse --short HEAD 2>/dev/null || date +%s)"
 if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-  # The build context is the working tree, not the commit — say so, otherwise
-  # the image tag implies a clean checkout it does not contain.
-  echo "note: working tree has uncommitted changes; they are included in ${TAG}"
+  # The build context is the working tree, not the commit, so the commit SHA
+  # alone is the wrong tag twice over. It claims a clean checkout the image
+  # does not contain — and worse, the app is usually already running that exact
+  # tag, and `containerapp update` creates no new revision when the image
+  # string is unchanged. The build then overwrites the tag in the registry, the
+  # rollout reports success, and the previous code keeps serving with nothing
+  # anywhere saying so. A unique suffix forces a real revision.
+  TAG="${TAG}-dirty-$(date +%s)"
+  echo "note: uncommitted changes are included; tagging ${TAG}"
 fi
 
-say "Building ${IMAGE_NAME}:${TAG}"
-az_ acr build --registry "$ACR" --image "${IMAGE_NAME}:${TAG}" --image "${IMAGE_NAME}:latest" .
+acr_build
 
 ACR_SERVER="$(az_ acr show -n "$ACR" -g "$RESOURCE_GROUP" --query loginServer -o tsv | tr -d '\r')"
 

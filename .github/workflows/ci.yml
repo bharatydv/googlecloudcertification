@@ -1,0 +1,39 @@
+# Checks that gate a pull request.
+#
+# Runs the same three things the container build would run, but without
+# touching Azure — so a branch that cannot build is caught before it is
+# merged, rather than after deploy.yml has already started shipping it.
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  # Also on master itself: a direct push bypasses the PR checks otherwise.
+  push:
+    branches: [master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 to match the runtime in Dockerfile — a version skew here would
+      # let something pass CI and then fail inside the image.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1

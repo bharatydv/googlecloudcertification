@@ -1,14 +1,21 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import {
+  EMPTY_PROGRESS,
+  normalizeProgress,
+  type AttemptRecord,
+  type ProgressState,
+} from "./progress-state";
 
 /**
  * Local progress tracking.
  *
- * Until accounts exist, study progress lives in the browser. The shape below
- * is intentionally the shape we would persist server-side, so the storage
- * layer can be swapped for an API call without touching any component:
- * every consumer goes through the hooks in this file.
+ * The browser is always the working copy: reads and writes go to localStorage
+ * and stay instant, whether or not anyone is signed in. When there is an
+ * account, `progress-sync.ts` mirrors this store to the server in the
+ * background — it layers on top rather than replacing anything here, so the
+ * whole site keeps working signed-out, offline, and with storage blocked.
  *
  * Reads go through `useSyncExternalStore` rather than an effect, so React
  * handles the server/client snapshot difference itself and there is no
@@ -17,38 +24,14 @@ import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "gcpprep:progress:v1";
 
-export interface AttemptRecord {
-  /** Certification slug, or `topic:<id>` for a topic drill. */
-  subject: string;
-  date: string;
-  correct: number;
-  total: number;
-  /** Correct/total per question topic, for weak-topic analysis. */
-  byTopic: Record<string, { correct: number; total: number }>;
-}
-
-export interface ProgressState {
-  /** Completed roadmap steps, keyed by cert slug. */
-  roadmap: Record<string, number[]>;
-  /** Learning topics marked as read. */
-  readTopics: string[];
-  /** Bookmarked pages. */
-  bookmarks: { href: string; title: string }[];
-  /** Practice attempts, newest first. */
-  attempts: AttemptRecord[];
-  /** Dates (YYYY-MM-DD) on which any activity was recorded. */
-  activeDays: string[];
-  /** The certification the learner is currently focused on. */
-  focusCert?: string;
-}
-
-export const EMPTY_PROGRESS: ProgressState = {
-  roadmap: {},
-  readTopics: [],
-  bookmarks: [],
-  attempts: [],
-  activeDays: [],
-};
+/*
+ * The state shape, its parser and its merge live in `progress-state.ts` so the
+ * Server Actions that sync progress can use them too — this module is
+ * client-only and they are not. Re-exported here so every consumer keeps
+ * importing from one place.
+ */
+export { EMPTY_PROGRESS };
+export type { AttemptRecord, ProgressState };
 
 /* ------------------------------------------------------------------ */
 /* Storage access                                                      */
@@ -82,8 +65,7 @@ function getSnapshot(): ProgressState {
   }
 
   try {
-    const parsed = JSON.parse(raw) as Partial<ProgressState>;
-    cachedState = { ...EMPTY_PROGRESS, ...parsed };
+    cachedState = normalizeProgress(JSON.parse(raw));
   } catch {
     cachedState = EMPTY_PROGRESS;
   }
@@ -103,8 +85,26 @@ function subscribe(onChange: () => void) {
   };
 }
 
-function read(): ProgressState {
+/**
+ * The current local state, read synchronously.
+ *
+ * Exported for `progress-sync.ts`, which needs the value outside of a render
+ * to merge it with the server's copy.
+ */
+export function readProgress(): ProgressState {
   return getSnapshot();
+}
+
+/**
+ * Replaces the local state and notifies every subscriber.
+ *
+ * Exported for the sync layer to write back a merged state. Note that this
+ * does *not* mark the day active — unlike the hooks, applying a merge is not
+ * itself study activity, and counting it as such would keep a streak alive on
+ * a day the learner only opened a page.
+ */
+export function writeProgress(state: ProgressState) {
+  write(state);
 }
 
 function write(state: ProgressState) {
@@ -156,7 +156,7 @@ export function useProgress() {
   );
 
   const update = useCallback((fn: (prev: ProgressState) => ProgressState) => {
-    write(touchDay(fn(read())));
+    write(touchDay(fn(readProgress())));
   }, []);
 
   return { progress, update };
@@ -191,7 +191,7 @@ export function useRoadmapProgress(certSlug: string, totalSteps: number) {
 /* ------------------------------------------------------------------ */
 
 export function recordAttempt(attempt: AttemptRecord) {
-  const state = read();
+  const state = readProgress();
   write(
     touchDay({
       ...state,
@@ -201,18 +201,18 @@ export function recordAttempt(attempt: AttemptRecord) {
 }
 
 export function markTopicRead(slug: string) {
-  const state = read();
+  const state = readProgress();
   if (state.readTopics.includes(slug)) return;
   write(touchDay({ ...state, readTopics: [...state.readTopics, slug] }));
 }
 
 export function setFocusCert(slug: string) {
-  const state = read();
+  const state = readProgress();
   write(touchDay({ ...state, focusCert: slug }));
 }
 
 export function toggleBookmark(href: string, title: string) {
-  const state = read();
+  const state = readProgress();
   const exists = state.bookmarks.some((b) => b.href === href);
   write(
     touchDay({

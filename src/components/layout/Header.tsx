@@ -8,6 +8,10 @@ import { mainNav, site } from "@/lib/site";
 import { Icon, Logo } from "@/components/ui/Icon";
 import { buttonClass } from "@/components/ui";
 import { SearchDialog } from "@/components/search/SearchDialog";
+import {
+  AccountMenu,
+  AccountMobileLinks,
+} from "@/components/auth/AccountMenu";
 
 export function Header() {
   const pathname = usePathname();
@@ -88,12 +92,7 @@ export function Header() {
               </kbd>
             </button>
 
-            <Link
-              href="/signin"
-              className="hidden rounded-lg px-3 py-2 text-[0.875rem] font-medium text-ink-600 transition-colors hover:bg-ink-100 hover:text-ink-900 sm:block"
-            >
-              Sign In
-            </Link>
+            <AccountMenu />
 
             <Link
               href="/practice-tests"
@@ -145,14 +144,7 @@ export function Header() {
                     Dashboard
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/signin"
-                    className="block rounded-lg px-3 py-2.5 text-[0.9375rem] font-medium text-ink-700 hover:bg-ink-100"
-                  >
-                    Sign In
-                  </Link>
-                </li>
+                <AccountMobileLinks />
                 <li className="mt-2">
                   <Link
                     href="/practice-tests"

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
-import { site } from "@/lib/site";
+import { LEGAL_REVISED, site } from "@/lib/site";
 import { LegalPage } from "@/components/layout/LegalPage";
 
 export const metadata: Metadata = pageMetadata({
@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
     <LegalPage
       title="Privacy Policy"
       path="/privacy-policy"
-      updated="2026-09-01"
+      updated={LEGAL_REVISED}
       intro="The short version: we do not run advertising or third-party tracking, we do not sell data, and your study progress is stored in your own browser rather than on our servers."
     >
       <h2>Who we are</h2>

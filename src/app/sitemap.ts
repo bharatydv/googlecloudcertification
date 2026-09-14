@@ -1,11 +1,15 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/lib/site";
-import { certifications } from "@/lib/data/certifications";
+import { LEGAL_REVISED, SITE_REVISED, site } from "@/lib/site";
+import {
+  CERTIFICATIONS_REVISED,
+  certifications,
+} from "@/lib/data/certifications";
 import { learnTopics } from "@/lib/data/learn";
 import { guides } from "@/lib/data/guides";
 import { careerPages } from "@/lib/data/careers";
 import { blogPosts } from "@/lib/data/blog";
 import {
+  QUESTIONS_REVISED,
   countQuestionsForCert,
   getQuestionsByTopic,
   questionTopicOrder,
@@ -18,36 +22,41 @@ const url = (path: string) => `${site.url}${path === "/" ? "" : path}`;
  *
  * Personal and parameterised pages (dashboard, search, sign in) are excluded
  * deliberately — they carry a noindex directive and have no search value.
+ *
+ * Every `lastModified` here traces back to a real editorial date: the page's
+ * own `updated` field where it has one, otherwise the revision constant for
+ * the data it renders. Nothing is stamped with the build time. A sitemap whose
+ * `<lastmod>` moves on every deploy tells Google that the whole file's dates
+ * are noise, and it responds by ignoring `<lastmod>` for the entire site —
+ * which costs us the recrawl signal on the pages that genuinely do change.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const today = new Date();
+  const siteRevised = new Date(SITE_REVISED);
+  const legalRevised = new Date(LEGAL_REVISED);
+  const certsRevised = new Date(CERTIFICATIONS_REVISED);
+  const questionsRevised = new Date(QUESTIONS_REVISED);
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: url("/"), changeFrequency: "weekly", priority: 1 },
-    { url: url("/certifications"), changeFrequency: "weekly", priority: 0.9 },
-    { url: url("/practice-tests"), changeFrequency: "weekly", priority: 0.9 },
-    { url: url("/learn"), changeFrequency: "weekly", priority: 0.9 },
-    { url: url("/guides"), changeFrequency: "weekly", priority: 0.8 },
-    { url: url("/careers"), changeFrequency: "monthly", priority: 0.7 },
-    { url: url("/blog"), changeFrequency: "weekly", priority: 0.7 },
-    { url: url("/ai"), changeFrequency: "monthly", priority: 0.6 },
-    { url: url("/pricing"), changeFrequency: "monthly", priority: 0.5 },
-    { url: url("/about"), changeFrequency: "monthly", priority: 0.5 },
-    { url: url("/contact"), changeFrequency: "yearly", priority: 0.4 },
-    { url: url("/disclaimer"), changeFrequency: "yearly", priority: 0.4 },
-    { url: url("/privacy-policy"), changeFrequency: "yearly", priority: 0.3 },
-    { url: url("/terms"), changeFrequency: "yearly", priority: 0.3 },
-    { url: url("/cookie-policy"), changeFrequency: "yearly", priority: 0.3 },
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: url("/"), lastModified: siteRevised, changeFrequency: "weekly", priority: 1 },
+    { url: url("/certifications"), lastModified: certsRevised, changeFrequency: "weekly", priority: 0.9 },
+    { url: url("/practice-tests"), lastModified: questionsRevised, changeFrequency: "weekly", priority: 0.9 },
+    { url: url("/learn"), lastModified: latest(learnTopics), changeFrequency: "weekly", priority: 0.9 },
+    { url: url("/guides"), lastModified: latest(guides), changeFrequency: "weekly", priority: 0.8 },
+    { url: url("/careers"), lastModified: latest(careerPages), changeFrequency: "monthly", priority: 0.7 },
+    { url: url("/blog"), lastModified: latest(blogPosts), changeFrequency: "weekly", priority: 0.7 },
+    { url: url("/ai"), lastModified: siteRevised, changeFrequency: "monthly", priority: 0.6 },
+    { url: url("/pricing"), lastModified: siteRevised, changeFrequency: "monthly", priority: 0.5 },
+    { url: url("/about"), lastModified: siteRevised, changeFrequency: "monthly", priority: 0.5 },
+    { url: url("/contact"), lastModified: siteRevised, changeFrequency: "yearly", priority: 0.4 },
+    { url: url("/disclaimer"), lastModified: legalRevised, changeFrequency: "yearly", priority: 0.4 },
+    { url: url("/privacy-policy"), lastModified: legalRevised, changeFrequency: "yearly", priority: 0.3 },
+    { url: url("/terms"), lastModified: legalRevised, changeFrequency: "yearly", priority: 0.3 },
+    { url: url("/cookie-policy"), lastModified: legalRevised, changeFrequency: "yearly", priority: 0.3 },
   ];
-
-  const staticPages: MetadataRoute.Sitemap = staticRoutes.map((entry) => ({
-    ...entry,
-    lastModified: today,
-  }));
 
   const certPages: MetadataRoute.Sitemap = certifications.map((cert) => ({
     url: url(`/certifications/${cert.slug}`),
-    lastModified: today,
+    lastModified: certsRevised,
     changeFrequency: "monthly",
     priority: 0.9,
   }));
@@ -56,7 +65,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((cert) => countQuestionsForCert(cert.slug) > 0)
     .map((cert) => ({
       url: url(`/practice-tests/${cert.slug}`),
-      lastModified: today,
+      lastModified: questionsRevised,
       changeFrequency: "monthly",
       priority: 0.8,
     }));
@@ -65,7 +74,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((topic) => getQuestionsByTopic(topic).length > 0)
     .map((topic) => ({
       url: url(`/practice-tests/topics/${topic}`),
-      lastModified: today,
+      lastModified: questionsRevised,
       changeFrequency: "monthly",
       priority: 0.7,
     }));
@@ -108,4 +117,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...careerRoutes,
     ...postPages,
   ];
+}
+
+/**
+ * The newest `updated` date in a collection — the honest `<lastmod>` for the
+ * index page that lists it, since the index changes exactly when its newest
+ * entry does.
+ */
+function latest(entries: readonly { updated: string }[]): Date {
+  return new Date(
+    entries.reduce(
+      (newest, entry) => (entry.updated > newest ? entry.updated : newest),
+      entries[0].updated,
+    ),
+  );
 }

@@ -1,9 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { CareerTrack, Experience } from "@/types";
 import {
   certLevelMeta,
   certLevelOrder,
   careerTrackMeta,
+  certifications,
   getCertificationsByLevel,
   recommendCertifications,
 } from "@/lib/data/certifications";
@@ -14,6 +16,7 @@ import {
   ButtonLink,
   Container,
   Icon,
+  JsonLd,
   Section,
   SectionHeading,
 } from "@/components/ui";
@@ -24,6 +27,22 @@ import {
 } from "@/components/cert/CertificationFinder";
 import { HeroVisual } from "@/components/marketing/HeroVisual";
 import { HomeSearch } from "@/components/search/HomeSearch";
+import { site } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
+import { itemListSchema } from "@/lib/schema";
+
+/*
+ * Stated explicitly rather than inherited from the root layout. The layout's
+ * defaults exist for pages that forget, and its Open Graph title had drifted
+ * to a different wording than its <title> — this keeps the homepage's own
+ * title, description, canonical and social card in one place and consistent
+ * with each other, exactly like every other page on the site.
+ */
+export const metadata: Metadata = pageMetadata({
+  title: "Google Cloud Certification Prep & Practice Tests",
+  description: site.description,
+  path: "/",
+});
 
 /**
  * Precompute every finder combination on the server. There are 21 of them, so
@@ -90,7 +109,9 @@ export default function HomePage() {
                   <dt className="text-[0.75rem] uppercase tracking-[0.08em] text-ink-500">
                     Certifications
                   </dt>
-                  <dd className="mt-1 text-xl font-semibold text-ink-900">12</dd>
+                  <dd className="mt-1 text-xl font-semibold text-ink-900">
+                    {certifications.length}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[0.75rem] uppercase tracking-[0.08em] text-ink-500">
@@ -389,6 +410,17 @@ export default function HomePage() {
           </div>
         </Container>
       </Section>
+
+      {/* Describes the certification cards rendered above, nothing more. */}
+      <JsonLd
+        data={itemListSchema({
+          name: "Google Cloud certifications",
+          items: certifications.map((cert) => ({
+            name: cert.name,
+            path: `/certifications/${cert.slug}`,
+          })),
+        })}
+      />
     </>
   );
 }

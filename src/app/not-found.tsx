@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink, Container, Icon, Section } from "@/components/ui";
+
+/*
+ * Without this the root layout's metadata applies, which would have every 404
+ * declare the homepage as its canonical URL and invite indexing. The 404
+ * status is the real defence, but a page that names a canonical it is not is
+ * a contradiction worth not shipping.
+ */
+export const metadata: Metadata = {
+  title: "Page Not Found",
+  description: "That page does not exist. Find certifications, practice tests, guides and learning material instead.",
+  alternates: { canonical: null },
+  robots: { index: false, follow: true },
+};
 
 const destinations = [
   {

@@ -1,96 +1,75 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { pageMetadata } from "@/lib/seo";
-import {
-  ButtonLink,
-  Callout,
-  Container,
-  Icon,
-  Section,
-} from "@/components/ui";
+import { authAvailable, getUser } from "@/lib/auth/dal";
+import { safeRedirectPath } from "@/lib/auth/validation";
+import { AuthShell, AuthUnavailable } from "@/components/auth/AuthShell";
+import { SignInForm } from "@/components/auth/SignInForm";
+import { FormAlert } from "@/components/auth/fields";
 
 export const metadata: Metadata = pageMetadata({
   title: "Sign In",
   description:
-    "Accounts are not live yet. Everything on GCP Prep works without one, and your progress is saved in your browser.",
+    "Sign in to carry your study progress, bookmarks and practice history across every device.",
   path: "/signin",
+  // Nothing here for a search engine, and not a page anyone should arrive at
+  // from a result.
   index: false,
 });
 
-/**
- * Placeholder for authentication.
- *
- * The architecture supports accounts — progress, attempts and bookmarks all
- * live behind the hooks in lib/progress.ts, which can be pointed at an API
- * without touching any component. Until that backend exists we say so plainly
- * rather than showing a form that cannot work.
- */
-export default function SignInPage() {
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth: "Google sign-in could not be started. Try again, or use your email address below.",
+  callback:
+    "That sign-in link could not be completed. It may have already been used — start again below.",
+  unavailable: "Accounts are not switched on for this site yet.",
+};
+
+export default async function SignInPage({
+  searchParams,
+}: {
+  // A Promise in Next 16 — it has to be awaited before use.
+  searchParams: Promise<{ next?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const next = safeRedirectPath(params.next);
+
+  const subtitle =
+    "Your roadmap progress, saved pages and practice history, on every device you study from.";
+
+  if (!(await authAvailable())) {
+    return (
+      <AuthShell title="Sign in" subtitle={subtitle}>
+        <AuthUnavailable />
+      </AuthShell>
+    );
+  }
+
+  // Already signed in: send them on rather than showing a form they cannot use.
+  if (await getUser()) redirect(next);
+
+  const error = params.error ? OAUTH_ERRORS[params.error] : undefined;
+
   return (
-    <Section className="py-16">
-      <Container size="narrow">
-        <div className="mx-auto max-w-lg text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
-            <Icon name="graduation" className="h-6 w-6 text-brand-600" />
-          </div>
-
-          <h1 className="mt-5 text-[1.75rem] leading-tight">
-            Accounts are not live yet
-          </h1>
-
-          <p className="mt-4 text-[1.0625rem] leading-relaxed text-ink-600">
-            You do not need one. Every guide, learning topic and practice
-            question on this site is available without signing in, and your
-            study progress is saved automatically in your browser.
-          </p>
-        </div>
-
-        <Callout tone="info" title="What an account will add" className="mt-8">
-          Progress synced across your devices, saved questions and bookmarks
-          that follow you, longer attempt history, and personalised study plans.
-          None of that is available yet, and we are not collecting email
-          addresses for a waitlist.
-        </Callout>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+    <AuthShell
+      title="Sign in"
+      subtitle={subtitle}
+      footer={
+        <>
+          New here?{" "}
           <Link
-            href="/dashboard"
-            className="group rounded-card border border-ink-200 bg-white p-5 transition-[box-shadow,border-color] hover:border-brand-300 hover:shadow-subtle"
+            href={`/signup?next=${encodeURIComponent(next)}`}
+            className="font-medium text-brand-600 underline underline-offset-2"
           >
-            <Icon name="chart" className="h-5 w-5 text-brand-500" />
-            <h2 className="mt-3 text-[0.9375rem] font-semibold text-ink-900 group-hover:text-brand-700">
-              Your dashboard
-            </h2>
-            <p className="mt-1.5 text-[0.875rem] leading-relaxed text-ink-600">
-              Progress, practice performance and weak topics — all from local
-              storage, no account needed.
-            </p>
+            Create a free account
           </Link>
-
-          <Link
-            href="/privacy-policy"
-            className="group rounded-card border border-ink-200 bg-white p-5 transition-[box-shadow,border-color] hover:border-brand-300 hover:shadow-subtle"
-          >
-            <Icon name="shield" className="h-5 w-5 text-brand-500" />
-            <h2 className="mt-3 text-[0.9375rem] font-semibold text-ink-900 group-hover:text-brand-700">
-              What we store
-            </h2>
-            <p className="mt-1.5 text-[0.875rem] leading-relaxed text-ink-600">
-              Nothing on our servers. Read exactly what stays in your browser
-              and how to clear it.
-            </p>
-          </Link>
-        </div>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/certifications" size="md">
-            Explore certifications
-          </ButtonLink>
-          <ButtonLink href="/practice-tests" variant="secondary" size="md">
-            Start practising
-          </ButtonLink>
-        </div>
-      </Container>
-    </Section>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        {error ? <FormAlert tone="error">{error}</FormAlert> : null}
+        <SignInForm next={next} />
+      </div>
+    </AuthShell>
   );
 }

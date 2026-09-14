@@ -89,3 +89,22 @@ export const footerNav = [
     ],
   },
 ] as const;
+
+/**
+ * Content revision dates.
+ *
+ * These feed `<lastmod>` in the sitemap for pages whose content is not itself
+ * dated. Learn topics, guides, blog posts and career pages each carry their
+ * own `updated` field and use that instead.
+ *
+ * Google ignores `<lastmod>` across an entire sitemap once it decides the
+ * values are not trustworthy, and the fastest way to earn that is to stamp
+ * `new Date()` on every URL at build time. So these are constants: bump the
+ * relevant one by hand when you actually revise the content it covers.
+ */
+
+/** The marketing pages — home, about, pricing, contact, hub indexes. */
+export const SITE_REVISED = "2026-09-02";
+
+/** The legal pages. Rendered on the pages themselves as well. */
+export const LEGAL_REVISED = "2026-09-01";

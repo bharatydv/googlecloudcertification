@@ -440,11 +440,20 @@ export function FaqList({
 /* ------------------------------------------------------------------ */
 
 export function JsonLd({ data }: { data: Record<string, unknown> | Record<string, unknown>[] }) {
+  /*
+   * The payload is built from our own typed data, but it is still interpolated
+   * into a <script> body, where a literal "</script>" inside any string would
+   * close the tag early and drop the rest of the page's markup into the
+   * document. Escaping "<" to its unicode form is what Next's own JSON-LD
+   * guide recommends; JSON parsers read that escape identically, so the
+   * structured data is unchanged.
+   */
   return (
     <script
       type="application/ld+json"
-      // Content is generated from our own typed data, never user input.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
     />
   );
 }

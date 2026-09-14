@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   averageScore,
-  clearProgress,
   questionsAnswered,
   studyStreak,
   useHydrated,
@@ -11,6 +10,8 @@ import {
   weakTopics,
 } from "@/lib/progress";
 import { formatDate, pluralize } from "@/lib/utils";
+import { clearProgressEverywhere } from "@/lib/progress-sync";
+import { useSession } from "@/lib/auth/session";
 import { Icon, ProgressBar, buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,68 @@ function StatCard({
       </div>
       <p className="mt-3 text-2xl font-semibold text-ink-900">{value}</p>
       {hint ? <p className="mt-1 text-[0.8125rem] text-ink-500">{hint}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Where progress is kept, and how to get rid of it.
+ *
+ * The wording is not cosmetic: before accounts existed this said progress
+ * never leaves the browser, and for a signed-out visitor that is still exactly
+ * true. Saying it while syncing to a server would be a false privacy claim, so
+ * the two cases are stated separately.
+ */
+function StorageNotice() {
+  const { user, status } = useSession();
+  const signedIn = Boolean(user);
+
+  const clear = async () => {
+    const scope = signedIn
+      ? "Clear all progress from this browser and from your account, on every device? This cannot be undone."
+      : "Clear all locally stored progress? This cannot be undone.";
+    if (!window.confirm(scope)) return;
+    await clearProgressEverywhere(signedIn);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-ink-200 bg-ink-50 p-5">
+      <p className="max-w-2xl text-[0.8125rem] leading-relaxed text-ink-600">
+        {status === "loading" ? (
+          "Checking where your progress is stored…"
+        ) : signedIn ? (
+          <>
+            Progress is saved in this browser and synced to your account, so it
+            follows you to any device you sign in on. Manage it on your{" "}
+            <Link
+              href="/account"
+              className="font-medium text-brand-600 underline underline-offset-2"
+            >
+              account page
+            </Link>
+            .
+          </>
+        ) : (
+          <>
+            Progress is stored in this browser only. It is not sent anywhere and
+            will not follow you to another device —{" "}
+            <Link
+              href="/signup?next=%2Fdashboard"
+              className="font-medium text-brand-600 underline underline-offset-2"
+            >
+              create a free account
+            </Link>{" "}
+            to sync it.
+          </>
+        )}
+      </p>
+      <button
+        type="button"
+        onClick={() => void clear()}
+        className="text-[0.8125rem] font-medium text-danger-500 underline underline-offset-2 hover:text-danger-700"
+      >
+        Clear my progress
+      </button>
     </div>
   );
 }
@@ -333,27 +396,7 @@ export function DashboardView({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-ink-200 bg-ink-50 p-5">
-        <p className="text-[0.8125rem] leading-relaxed text-ink-600">
-          Progress is stored in this browser only. It is not sent anywhere and
-          will not follow you to another device.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                "Clear all locally stored progress? This cannot be undone.",
-              )
-            ) {
-              clearProgress();
-            }
-          }}
-          className="text-[0.8125rem] font-medium text-danger-500 underline underline-offset-2 hover:text-danger-700"
-        >
-          Clear my progress
-        </button>
-      </div>
+      <StorageNotice />
     </div>
   );
 }

@@ -38,6 +38,18 @@ MAX_REPLICAS="${MAX_REPLICAS:-3}"
 
 PORT="${PORT:-3000}"
 
+# Supabase — backs accounts and synced study progress. Leave both empty and the
+# site deploys exactly as before: everything works, signed out, with progress in
+# the browser. Find these under Project Settings -> API in the Supabase
+# dashboard ("Project URL" and the "anon public" key).
+#
+# Not NEXT_PUBLIC_*, deliberately: Next bakes public vars into the bundle at
+# build time, so changing one would mean rebuilding the image. Nothing in this
+# app talks to Supabase from the browser, so they are read at runtime instead
+# and one image works in every environment.
+SUPABASE_URL="${SUPABASE_URL:-}"
+SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY:-}"
+
 # Resolve the Azure CLI. The Windows installer does not reliably put az on PATH
 # for non-login shells, so fall back to the known install locations.
 #
@@ -62,6 +74,84 @@ if [ -z "$AZ" ]; then
   exit 1
 fi
 
-az_() { "$AZ" "$@"; }
+az_() { PYTHONIOENCODING=utf-8 PYTHONUTF8=1 "$AZ" "$@"; }
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+
+# Build IMAGE_NAME:TAG in ACR, without streaming the remote build log.
+#
+# `az acr build` normally streams that log to the console. The Next.js build
+# prints U+25B2 (the ▲ in its banner) and on Windows the CLI pushes the stream
+# through colorama to a cp1252 console, which has no encoding for that
+# character — so the log handler raises UnicodeEncodeError and aborts the
+# command while the build is still running in Azure. The traceback names
+# colorama and never mentions encodings, and PYTHONIOENCODING does not help,
+# because the console wrapper has already bound the original encoding.
+#
+# Queueing with --no-logs removes the stream entirely, so the outcome comes
+# from the run status rather than from parsed output. Logs are fetched only on
+# failure, which is the only time they are wanted anyway.
+acr_build() {
+  local run_id status waited=0
+
+  say "Building ${IMAGE_NAME}:${TAG} in ACR"
+  run_id="$(az_ acr build --registry "$ACR" \
+    --image "${IMAGE_NAME}:${TAG}" \
+    --image "${IMAGE_NAME}:latest" \
+    --no-logs --query runId -o tsv . | tr -d '\r')"
+
+  if [ -z "$run_id" ]; then
+    echo "Could not queue the ACR build." >&2
+    return 1
+  fi
+  echo "    run ${run_id}"
+
+  # Poll rather than block silently: a cold build agent plus a Next build runs
+  # several minutes, and a silent wait that long looks like a hang.
+  while :; do
+    status="$(az_ acr task show-run -r "$ACR" --run-id "$run_id" \
+      --query status -o tsv 2>/dev/null | tr -d '\r')"
+
+    case "$status" in
+      Succeeded)
+        echo "    build succeeded after ${waited}s"
+        return 0
+        ;;
+      Failed|Canceled|Error|Timeout)
+        echo "    build ${status}. Last log lines:" >&2
+        # Best effort: this reuses the streaming path that can hit the encoding
+        # bug, so never let it mask the build failure it is reporting on.
+        az_ acr task logs -r "$ACR" --run-id "$run_id" 2>/dev/null | tail -30 >&2 || true
+        echo "    full log: az acr task logs -r ${ACR} --run-id ${run_id}" >&2
+        return 1
+        ;;
+    esac
+
+    if [ "$waited" -ge 1800 ]; then
+      echo "    build still ${status:-unknown} after 30m; giving up waiting." >&2
+      return 1
+    fi
+    sleep 10
+    waited=$((waited + 10))
+  done
+}
+
+# Push the Supabase settings onto the running app.
+#
+# The anon key goes in as a Container Apps secret rather than a plain env var.
+# It is a public, RLS-constrained key rather than a true secret, but a secret
+# reference keeps it out of `az containerapp show` output and out of the
+# revision history, which is where credentials get copied from by accident.
+apply_supabase_env() {
+  if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+    echo "    Supabase not set — accounts stay switched off (the site works without them)."
+    return 0
+  fi
+
+  say "Configuring Supabase on ${APP}"
+  az_ containerapp secret set -n "$APP" -g "$RESOURCE_GROUP"     --secrets "supabase-anon-key=${SUPABASE_ANON_KEY}" -o none
+
+  # --set-env-vars merges; --replace-env-vars would drop NODE_ENV.
+  az_ containerapp update -n "$APP" -g "$RESOURCE_GROUP"     --set-env-vars "SUPABASE_URL=${SUPABASE_URL}"                    "SUPABASE_ANON_KEY=secretref:supabase-anon-key" -o none
+  echo "    accounts enabled"
+}

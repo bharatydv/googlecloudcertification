@@ -1,0 +1,79 @@
+# Ship master to Azure Container Apps.
+#
+# Fires on every push to master, which includes a merged pull request — so the
+# flow is: branch -> PR -> CI passes -> merge -> this runs.
+#
+# The image is built by `az acr build`, which uploads the context and builds
+# inside Azure. That means no Docker daemon, no registry login, and no image
+# push from the runner.
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Never let two deploys overlap. Without this, two quick merges race and the
+# older image can land last and win. Queued rather than cancelled, so an
+# in-flight rollout is allowed to finish cleanly.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # required for OIDC login to Azure
+  contents: read
+
+env:
+  RESOURCE_GROUP: gcpprep-rg
+  APP: gcpprep-web
+  IMAGE_NAME: gcpprep
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Federated (OIDC) login — no Azure secret is stored in the repo. The
+      # three values below are identifiers, not credentials; trust comes from
+      # the federated credential that pins this repo and branch.
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build \
+            --registry "${{ secrets.AZURE_ACR }}" \
+            --image "${IMAGE_NAME}:${GITHUB_SHA}" \
+            --image "${IMAGE_NAME}:latest" \
+            .
+
+      - name: Roll out
+        run: |
+          server=$(az acr show -n "${{ secrets.AZURE_ACR }}" -g "$RESOURCE_GROUP" \
+            --query loginServer -o tsv)
+          # Tagged with the commit SHA, not :latest — Container Apps would not
+          # see a new revision if the tag string never changes.
+          az containerapp update -n "$APP" -g "$RESOURCE_GROUP" \
+            --image "${server}/${IMAGE_NAME}:${GITHUB_SHA}" -o none
+
+      - name: Verify
+        run: |
+          fqdn=$(az containerapp show -n "$APP" -g "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          # Hit the app's own FQDN rather than the custom domain: this proves
+          # the new revision serves, without depending on DNS or the managed
+          # certificate. min-replicas=0 means this may pay for a cold start.
+          for i in 1 2 3 4 5; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 60 "https://${fqdn}/" || echo 000)
+            echo "attempt ${i}: ${code}"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "app did not return 200 after rollout" >&2
+          exit 1

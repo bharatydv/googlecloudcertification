@@ -124,3 +124,9 @@ export function topicBreakdown() {
     }))
     .filter((t) => t.count > 0);
 }
+
+/**
+ * When the question bank was last revised. Feeds `<lastmod>` for the practice
+ * test and topic drill URLs — bump it when questions are added or reworked.
+ */
+export const QUESTIONS_REVISED = "2026-09-02";

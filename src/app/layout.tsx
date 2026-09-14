@@ -6,6 +6,7 @@ import { organizationSchema, websiteSchema } from "@/lib/schema";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { JsonLd } from "@/components/ui";
+import { ProgressSync } from "@/components/account/ProgressSync";
 
 /*
  * Two faces, mirroring how Google Cloud's own site is set: a geometric display
@@ -33,10 +34,13 @@ const dmSans = DM_Sans({
   variable: "--font-display-face",
 });
 
+/** The title used when a page does not set one of its own. */
+const DEFAULT_TITLE = "Google Cloud Certification Prep & Practice Tests";
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "Google Cloud Certification Prep & Practice Tests",
+    default: DEFAULT_TITLE,
     template: `%s | ${site.name}`,
   },
   description: site.description,
@@ -50,17 +54,23 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
+  /*
+   * Fallbacks only. Every page sets its own title, canonical and social card
+   * through `pageMetadata`, the homepage included. These three wordings had
+   * drifted apart from each other, so a page that did forget would have
+   * advertised one title to readers and a different one to social cards.
+   */
   openGraph: {
     type: "website",
     url: site.url,
     siteName: site.name,
     locale: site.locale,
-    title: `Cloud Certification Preparation & Practice Tests | ${site.domain}`,
+    title: `${DEFAULT_TITLE} | ${site.name}`,
     description: site.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: `Cloud Certification Preparation & Practice Tests`,
+    title: `${DEFAULT_TITLE} | ${site.name}`,
     description: site.description,
   },
   category: "education",
@@ -105,6 +115,8 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        {/* Renders nothing; mirrors progress to the account when signed in. */}
+        <ProgressSync />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </body>
     </html>

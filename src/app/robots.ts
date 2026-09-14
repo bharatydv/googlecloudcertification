@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         /*
          * Nothing is disallowed here on purpose. /dashboard, /search and
-         * /signin carry a noindex directive instead. Blocking them in
+         * the account pages (/signin, /signup, /account, /forgot-password,
+         * /reset-password) carry a noindex directive instead. Blocking them in
          * robots.txt would stop crawlers fetching the page at all, so they
          * would never see the noindex — and the URL could still be listed
          * from an inbound link. Allowing the crawl is what actually keeps

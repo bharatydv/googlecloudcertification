@@ -10,7 +10,7 @@ import {
 } from "@/lib/data/questions";
 import { getLearnTopic } from "@/lib/data/learn";
 import { pageMetadata } from "@/lib/seo";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, quizSchema } from "@/lib/schema";
 import { Breadcrumbs, Callout, Container, Icon, JsonLd } from "@/components/ui";
 import { PracticeRunner } from "@/components/practice/PracticeRunner";
 import { RelatedContent } from "@/components/content/Related";
@@ -172,7 +172,18 @@ export default async function TopicDrillPage({
         />
       </Container>
 
-      <JsonLd data={breadcrumbSchema(crumbs)} />
+      <JsonLd
+        data={[
+          breadcrumbSchema(crumbs),
+          quizSchema({
+            name: `${meta.label} Practice Questions`,
+            description: `${questions.length} original ${meta.label} practice questions for Google Cloud certifications, with a full explanation for every answer.`,
+            path: `/practice-tests/topics/${topic}`,
+            questionCount: questions.length,
+            topics: concepts,
+          }),
+        ]}
+      />
     </>
   );
 }
