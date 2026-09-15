@@ -13,6 +13,7 @@ import { pageMetadata, metaDescription } from "@/lib/seo";
 import {
   breadcrumbSchema,
   courseSchema,
+  credentialSchema,
   faqSchema,
 } from "@/lib/schema";
 import {
@@ -503,9 +504,29 @@ export default async function CertificationPage({
         data={[
           breadcrumbSchema(crumbs),
           courseSchema({
-            name: `${cert.name} study guide`,
+            name: `${cert.name} Course & Study Guide`,
             description: cert.description,
             path: `/certifications/${cert.slug}`,
+            prepWeeks: cert.prepWeeks,
+            /*
+             * The exam topic section titles, not the individual points. The
+             * titles are the officially published domains and are what someone
+             * would actually search for; the points below them are our
+             * summaries and run to hundreds of entries per exam.
+             */
+            teaches: cert.examTopics.map((section) => section.title),
+            prerequisites: cert.facts.recommendedExperience,
+            credentialAwarded: cert.name,
+            level: certLevelMeta[cert.level].label,
+          }),
+          credentialSchema({
+            name: cert.name,
+            description: cert.description,
+            path: `/certifications/${cert.slug}`,
+            level: certLevelMeta[cert.level].label,
+            competencies: cert.skills,
+            validity: cert.facts.validity,
+            officialUrl: cert.facts.officialUrl,
           }),
           faqSchema(cert.faqs),
         ]}

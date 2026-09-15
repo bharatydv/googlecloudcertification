@@ -172,6 +172,9 @@ export default async function BlogPostPage({
             published: post.published,
             modified: post.updated,
             author: post.author,
+            authorRole: post.authorRole,
+            wordCount: post.readingWords,
+            about: [post.category],
           }),
         ]}
       />
