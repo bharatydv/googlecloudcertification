@@ -20,6 +20,34 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Dependencies: regenerate the lockfile on Linux
+
+`npm ci` in CI runs on Linux and validates the **entire** dependency graph
+against `package-lock.json`, including the optional `wasm32` packages that
+never install on Windows — `@emnapi/core` and `@emnapi/runtime`, pulled in by
+`@img/sharp-wasm32` and `@tailwindcss/oxide-wasm32-wasi`.
+
+Running `npm install` on Windows rewrites the lockfile with those entries
+**removed**, because npm records the tree it actually resolved for the current
+platform. The lockfile still works locally, and then CI fails with:
+
+```
+npm error `npm ci` can only install packages when your package.json and
+npm error package-lock.json ... are in sync.
+npm error Missing: @emnapi/runtime@1.11.3 from lock file
+```
+
+This has now broken the build twice. If you change dependencies from Windows,
+regenerate the lockfile somewhere Linux before committing it:
+
+```bash
+docker run --rm -v "$PWD":/app -w /app node:22 npm install --package-lock-only
+```
+
+Deleting `package-lock.json` and re-resolving also produces a complete tree,
+but it re-resolves every dependency to the newest version the ranges allow, so
+check the diff before committing it.
+
 ## Accounts and progress sync
 
 Accounts are **optional everywhere**. With no Supabase credentials configured
