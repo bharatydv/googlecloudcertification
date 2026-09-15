@@ -210,8 +210,17 @@ export default async function CertificationsPage({
       <JsonLd
         data={[
           breadcrumbSchema(crumbs),
+          /*
+           * This is the "summary page" form of Google's course list: an
+           * ItemList whose entries carry only a position and a URL, with the
+           * Course markup itself living on each detail page. That split is
+           * required — the carousel is only eligible if the linked pages
+           * really do describe a Course, which they now do.
+           */
           itemListSchema({
-            name: "Google Cloud certifications",
+            name: "Google Cloud certification courses and study guides",
+            description:
+              "Free, independent study guides and practice tests for every Google Cloud certification.",
             items: certifications.map((c) => ({
               name: c.name,
               path: `/certifications/${c.slug}`,
