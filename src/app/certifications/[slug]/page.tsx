@@ -13,6 +13,7 @@ import { pageMetadata, metaDescription } from "@/lib/seo";
 import {
   breadcrumbSchema,
   courseSchema,
+  credentialSchema,
   faqSchema,
 } from "@/lib/schema";
 import {
@@ -28,6 +29,8 @@ import {
 import { StudyRoadmap } from "@/components/cert/StudyRoadmap";
 import { PreparationPanel } from "@/components/cert/PreparationPanel";
 import { RelatedContent } from "@/components/content/Related";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerCertLink } from "@/lib/partner";
 
 export function generateStaticParams() {
   return certifications.map((cert) => ({ slug: cert.slug }));
@@ -83,6 +86,17 @@ export default async function CertificationPage({
       if (topic) learnTitles[s] = topic.title;
     }
   }
+
+  // Deep links to InferaCloud exist for five of the twelve exams; the rest
+  // fall back to its Google Cloud hub. `exact` decides which sentence reads
+  // truthfully below.
+  const voucher = partnerCertLink(cert.slug, "cert-overview");
+
+  // "USD $200 (plus tax where applicable)" -> "$200". The full string is
+  // right in the facts table; mid-sentence it needs to be just the figure.
+  const listPrice = cert.facts.price
+    .replace(/^USD\s+/, "")
+    .replace(/\s*\(.*\)\s*$/, "");
 
   const crumbs = [
     { name: "Home", path: "/" },
@@ -195,6 +209,22 @@ export default async function CertificationPage({
                   </dd>
                 </div>
               </dl>
+
+              <PartnerNote
+                className="mt-4"
+                icon="bookmark"
+                href={voucher.href}
+                cta={
+                  voucher.exact
+                    ? `Check ${cert.name} voucher pricing`
+                    : "Compare Google Cloud voucher prices"
+                }
+              >
+                The {listPrice} registration fee above is Google&apos;s list
+                price. InferaCloud, our sister site, resells Google Cloud exam
+                vouchers below it{voucher.exact ? ", including this one" : ""} —
+                worth checking before you book.
+              </PartnerNote>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-card border border-ink-200 bg-ink-50 p-5">
@@ -503,9 +533,29 @@ export default async function CertificationPage({
         data={[
           breadcrumbSchema(crumbs),
           courseSchema({
-            name: `${cert.name} study guide`,
+            name: `${cert.name} Course & Study Guide`,
             description: cert.description,
             path: `/certifications/${cert.slug}`,
+            prepWeeks: cert.prepWeeks,
+            /*
+             * The exam topic section titles, not the individual points. The
+             * titles are the officially published domains and are what someone
+             * would actually search for; the points below them are our
+             * summaries and run to hundreds of entries per exam.
+             */
+            teaches: cert.examTopics.map((section) => section.title),
+            prerequisites: cert.facts.recommendedExperience,
+            credentialAwarded: cert.name,
+            level: certLevelMeta[cert.level].label,
+          }),
+          credentialSchema({
+            name: cert.name,
+            description: cert.description,
+            path: `/certifications/${cert.slug}`,
+            level: certLevelMeta[cert.level].label,
+            competencies: cert.skills,
+            validity: cert.facts.validity,
+            officialUrl: cert.facts.officialUrl,
           }),
           faqSchema(cert.faqs),
         ]}

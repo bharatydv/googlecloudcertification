@@ -14,6 +14,8 @@ import {
   Section,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Pricing",
@@ -76,11 +78,15 @@ const faqs = [
   },
   {
     q: "Do you run ads?",
-    a: "No. There is no advertising and no third-party tracking on this site. If that changes we will say so clearly rather than quietly.",
+    a: "No third-party advertising and no third-party tracking — we sell no space on this site and no ad network sees your visit. We do link to InferaCloud, which is run by the same team and sells exam vouchers and paid courses. Those links are labelled as ours wherever they appear, because a recommendation that hides who benefits from it is an advert pretending not to be one.",
+  },
+  {
+    q: "What is InferaCloud and how is it related?",
+    a: "It is our sister site, owned and operated by the same team. It sells discounted exam vouchers, paid courses and exam scheduling — the commercial things this site deliberately does not do. Keeping them on separate sites is what lets the material here stay free and stay editorially independent of anything being sold.",
   },
   {
     q: "Do you offer discounts for students?",
-    a: "When premium launches, yes — we intend to have a substantially reduced student rate. Cost should not be the reason someone cannot prepare properly.",
+    a: "When premium launches, yes — we intend to have a substantially reduced student rate. Cost should not be the reason someone cannot prepare properly. In the meantime the real expense is the exam fee, and InferaCloud lists discounted vouchers for the Google Cloud exams.",
   },
 ];
 
@@ -181,6 +187,19 @@ export default function PricingPage() {
               </div>
             ))}
           </div>
+
+          <PartnerNote
+            className="mt-10"
+            icon="info"
+            href={partnerLinks.deals("pricing")}
+            cta="See what InferaCloud charges"
+          >
+            Neither tier above covers the exam fee, because we do not sell
+            exams — Google does, and it charges $99 to $200. InferaCloud, our
+            sister site, resells those vouchers at a discount and sells paid
+            courses. It is a separate business with separate pricing; nothing
+            on this page is affected by it.
+          </PartnerNote>
 
           <div className="mt-12">
             <h2 className="text-[1.5rem]">Questions about pricing</h2>

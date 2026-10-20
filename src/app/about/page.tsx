@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { DISCLAIMER, site } from "@/lib/site";
+import { partnerLinks } from "@/lib/partner";
 import { breadcrumbSchema } from "@/lib/schema";
 import { certifications } from "@/lib/data/certifications";
 import { learnTopics } from "@/lib/data/learn";
@@ -158,6 +159,17 @@ export default function AboutPage() {
               We will always tell you when something is paid before you spend
               time on it, and we do not run advertising or third-party tracking
               scripts.
+            </p>
+            <p>
+              The same team runs a second site,{" "}
+              <a href={partnerLinks.home("about-funding")}>InferaCloud</a>,
+              which sells discounted certification exam vouchers, paid courses
+              and exam scheduling. We link to it from a few places here and we
+              say who owns it every time. The split is intentional: the
+              commercial side lives there, so nothing on this site has to be
+              shaped around selling you something. Our difficulty ratings,
+              study timelines and recommendations are not influenced by it, and
+              we would tell you here if that ever changed.
             </p>
 
             <h2>What the site contains today</h2>

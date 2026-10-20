@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getGuide, guides } from "@/lib/data/guides";
+import { getCertification } from "@/lib/data/certifications";
 import { pageMetadata, metaDescription } from "@/lib/seo";
 import { articleSchema, breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { formatDate, readingTime } from "@/lib/utils";
@@ -47,6 +48,11 @@ export default async function GuidePage({
   const { slug } = await params;
   const guide = getGuide(slug);
   if (!guide) notFound();
+
+  /* Slugs resolved to names for the `about` entities in the JSON-LD below. */
+  const certNames = guide.relatedCerts
+    .map((slug) => getCertification(slug)?.name)
+    .filter((name): name is string => Boolean(name));
 
   const crumbs = [
     { name: "Home", path: "/" },
@@ -182,6 +188,8 @@ export default async function GuidePage({
             path: `/guides/${guide.slug}`,
             published: guide.published,
             modified: guide.updated,
+            wordCount: guide.readingWords,
+            about: certNames,
           }),
           ...(guide.faqs.length > 0 ? [faqSchema(guide.faqs)] : []),
         ]}

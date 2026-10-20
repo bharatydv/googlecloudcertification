@@ -18,6 +18,8 @@ import {
 } from "@/components/ui";
 import { CertificationCard } from "@/components/cert/CertificationCard";
 import { cn } from "@/lib/utils";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Cloud Certifications",
@@ -204,14 +206,35 @@ export default async function CertificationsPage({
               )}
             </div>
           </div>
+          <PartnerNote
+            className="mt-10"
+            icon="bookmark"
+            href={partnerLinks.certifications("certifications-index")}
+            cta="See discounted Google Cloud exam vouchers"
+          >
+            Every guide on this page is free. The exams themselves are not, and
+            Google&apos;s fees run from $99 for the foundational certifications
+            to $200 for the professional ones. Our sister site InferaCloud sells
+            vouchers for them below list price.
+          </PartnerNote>
+
         </Container>
       </Section>
 
       <JsonLd
         data={[
           breadcrumbSchema(crumbs),
+          /*
+           * This is the "summary page" form of Google's course list: an
+           * ItemList whose entries carry only a position and a URL, with the
+           * Course markup itself living on each detail page. That split is
+           * required — the carousel is only eligible if the linked pages
+           * really do describe a Course, which they now do.
+           */
           itemListSchema({
-            name: "Google Cloud certifications",
+            name: "Google Cloud certification courses and study guides",
+            description:
+              "Free, independent study guides and practice tests for every Google Cloud certification.",
             items: certifications.map((c) => ({
               name: c.name,
               path: `/certifications/${c.slug}`,

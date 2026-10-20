@@ -17,6 +17,8 @@ import {
   Section,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Learning Hub — Cloud Concepts Explained",
@@ -137,6 +139,18 @@ export default async function LearnPage({
               </div>
             ))}
           </div>
+          <PartnerNote
+            className="mt-10"
+            icon="graduation"
+            href={partnerLinks.courses("learn-index")}
+            cta="Browse structured courses on InferaCloud"
+          >
+            These topics are written to be read in any order, which suits
+            filling gaps but not starting from nothing. If you would rather be
+            taken through a subject in sequence, InferaCloud — run by the same
+            team — publishes full courses with exercises and assessments.
+          </PartnerNote>
+
         </Container>
       </Section>
 

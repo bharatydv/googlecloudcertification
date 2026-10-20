@@ -27,6 +27,8 @@ import {
 } from "@/components/cert/CertificationFinder";
 import { HeroVisual } from "@/components/marketing/HeroVisual";
 import { HomeSearch } from "@/components/search/HomeSearch";
+import { PartnerCard } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 import { itemListSchema } from "@/lib/schema";
@@ -340,6 +342,43 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      {/* --------------------- Sister site: InferaCloud -------------------- */}
+      <Section>
+        <Container>
+          <PartnerCard
+            heading="Booking the exam itself"
+            links={[
+              {
+                label: "Browse Google Cloud exam vouchers",
+                href: partnerLinks.certifications("home-card"),
+                primary: true,
+              },
+              {
+                label: "See current discounts",
+                href: partnerLinks.deals("home-card"),
+              },
+              {
+                label: "Schedule an exam",
+                href: partnerLinks.scheduleExam("home-card"),
+              },
+            ]}
+          >
+            <p>
+              Studying is free here and always will be. Sitting the exam is
+              not — Google charges between $99 and $200 depending on the
+              certification, and that is the one cost no amount of preparation
+              removes.
+            </p>
+            <p>
+              Our sister site InferaCloud sells vouchers for those exams at a
+              discount, alongside paid courses and exam scheduling. If you have
+              worked through the material here and are ready to book, it is
+              the cheaper way to do it.
+            </p>
+          </PartnerCard>
         </Container>
       </Section>
 

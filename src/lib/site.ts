@@ -7,6 +7,8 @@
  * on every page that references official certification information.
  */
 
+import { partnerLinks } from "@/lib/partner";
+
 export const site = {
   name: "GCP Prep",
   shortName: "GCP",
@@ -47,7 +49,21 @@ export const mainNav = [
   { href: "/blog", label: "Blog" },
 ] as const;
 
-export const footerNav = [
+/**
+ * `external` marks a link that leaves the site. The footer renders those as a
+ * plain <a> rather than next/link, which would otherwise try to client-side
+ * navigate to another origin.
+ */
+export type FooterLink = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+
+export const footerNav: readonly {
+  heading: string;
+  links: readonly FooterLink[];
+}[] = [
   {
     heading: "Certifications",
     links: [
@@ -75,6 +91,18 @@ export const footerNav = [
       { href: "/blog", label: "Blog" },
       { href: "/careers", label: "Career Resources" },
       { href: "/ai", label: "GCP Prep AI" },
+      /*
+       * Our sister site. One footer entry, with a label that names the
+       * destination rather than stuffing a keyword into it — a site-wide
+       * footer link carrying exact-match anchor text is the pattern Google's
+       * link spam policy singles out, and it would devalue the link it was
+       * meant to strengthen.
+       */
+      {
+        href: partnerLinks.home("footer"),
+        label: "InferaCloud",
+        external: true,
+      },
     ],
   },
   {
@@ -88,7 +116,7 @@ export const footerNav = [
       { href: "/disclaimer", label: "Disclaimer" },
     ],
   },
-] as const;
+];
 
 /**
  * Content revision dates.

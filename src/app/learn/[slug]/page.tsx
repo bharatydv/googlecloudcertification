@@ -5,7 +5,11 @@ import { getLearnTopic, learnCategoryMeta, learnTopics } from "@/lib/data/learn"
 import { getCertification } from "@/lib/data/certifications";
 import { getQuestionsByTopic, questionTopicMeta } from "@/lib/data/questions";
 import { pageMetadata, metaDescription } from "@/lib/seo";
-import { articleSchema, breadcrumbSchema } from "@/lib/schema";
+import {
+  articleSchema,
+  breadcrumbSchema,
+  learningResourceSchema,
+} from "@/lib/schema";
 import { formatDate, readingTime } from "@/lib/utils";
 import {
   Badge,
@@ -53,6 +57,12 @@ export default async function LearnTopicPage({
 
   const questionCount = getQuestionsByTopic(topic.questionTopic).length;
   const questionMeta = questionTopicMeta[topic.questionTopic];
+
+  /* Slugs resolved to names for the `about` entities in the JSON-LD below. */
+  const certNames = topic.certRelevance
+    .map((entry) => entry.cert)
+    .map((slug) => getCertification(slug)?.name)
+    .filter((name): name is string => Boolean(name));
 
   const crumbs = [
     { name: "Home", path: "/" },
@@ -205,6 +215,27 @@ export default async function LearnTopicPage({
             description: topic.summary,
             path: `/learn/${topic.slug}`,
             published: topic.updated,
+            modified: topic.updated,
+            wordCount: topic.readingWords,
+            /*
+             * Resolved to certification names, not slugs. `about` values are
+             * read as entity names, and "associate-cloud-engineer" names no
+             * entity anyone searches for.
+             */
+            about: certNames,
+          }),
+          /*
+           * Emitted alongside the Article rather than instead of it. The
+           * Article node is what carries the freshness and authorship signals;
+           * the LearningResource is what tells an answer engine the page
+           * defines a concept, which is the shape of query these topics win.
+           */
+          learningResourceSchema({
+            name: topic.title,
+            description: topic.summary,
+            path: `/learn/${topic.slug}`,
+            teaches: topic.oneLiner,
+            wordCount: topic.readingWords,
             modified: topic.updated,
           }),
         ]}
