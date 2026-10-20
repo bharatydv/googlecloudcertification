@@ -29,12 +29,26 @@ export function Footer() {
                 <ul className="mt-3.5 space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link.href + link.label}>
-                      <Link
-                        href={link.href}
-                        className="text-[0.875rem] text-ink-600 transition-colors hover:text-brand-600"
-                      >
-                        {link.label}
-                      </Link>
+                      {link.external ? (
+                        /*
+                         * A real anchor, not next/link, and deliberately
+                         * without rel="nofollow" — see lib/partner.ts for why
+                         * this link is followed.
+                         */
+                        <a
+                          href={link.href}
+                          className="text-[0.875rem] text-ink-600 transition-colors hover:text-brand-600"
+                        >
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={link.href}
+                          className="text-[0.875rem] text-ink-600 transition-colors hover:text-brand-600"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -14,6 +14,8 @@ import {
   Section,
   SectionHeading,
 } from "@/components/ui";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Cloud Certification Practice Tests",
@@ -217,6 +219,18 @@ export default function PracticeTestsPage() {
               </div>
             ))}
           </div>
+          <PartnerNote
+            className="mt-10"
+            icon="flag"
+            href={partnerLinks.scheduleExam("practice-tests-index")}
+            cta="Book your certification exam"
+          >
+            Scoring consistently well on these is a reasonable signal you are
+            ready for the real thing. When you are, InferaCloud handles exam
+            scheduling and discounted vouchers — it is the next step after this
+            page, and the same team runs it.
+          </PartnerNote>
+
         </Container>
       </Section>
 

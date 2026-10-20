@@ -18,6 +18,8 @@ import {
 } from "@/components/ui";
 import { CertificationCard } from "@/components/cert/CertificationCard";
 import { cn } from "@/lib/utils";
+import { PartnerNote } from "@/components/marketing/InferaCloud";
+import { partnerLinks } from "@/lib/partner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Cloud Certifications",
@@ -204,6 +206,18 @@ export default async function CertificationsPage({
               )}
             </div>
           </div>
+          <PartnerNote
+            className="mt-10"
+            icon="bookmark"
+            href={partnerLinks.certifications("certifications-index")}
+            cta="See discounted Google Cloud exam vouchers"
+          >
+            Every guide on this page is free. The exams themselves are not, and
+            Google&apos;s fees run from $99 for the foundational certifications
+            to $200 for the professional ones. Our sister site InferaCloud sells
+            vouchers for them below list price.
+          </PartnerNote>
+
         </Container>
       </Section>
 
